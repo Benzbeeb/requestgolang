@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
@@ -80,6 +82,25 @@ func handleList(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleDelete(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("delete")
+	vars := mux.Vars(r)
+	ou := vars["key"]
+	fmt.Println(ou)
+	originalURL, err := url.PathUnescape(ou)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	idx, err := strconv.Atoi(originalURL)
+
+	delete(tasks, idx)
+	err = json.NewEncoder(w).Encode(originalURL)
+
+}
+
 func main() {
 	fmt.Println("Hello")
 
@@ -93,6 +114,9 @@ func main() {
 
 	// list data in list
 	r.HandleFunc("/list", handleList).Methods("GET")
+
+	// delete data in list by key
+	r.HandleFunc("/delete/{key}", handleDelete).Methods("POST")
 
 	handler := cors.Default().Handler(r)
 	log.Fatal(http.ListenAndServe(":1234", handler))
