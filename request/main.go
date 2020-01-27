@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	tasks = make(map[int]Task)
+	tasks   = make(map[int]Task)
 	counter = 1
 )
 
@@ -20,8 +20,8 @@ type Task struct {
 	Text string `josn:"text"`
 }
 
-type addResponse struct{
-	TaskId int`josn:"id"`
+type addResponse struct {
+	TaskId int `josn:"id"`
 }
 
 func handleHealthz(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +52,7 @@ func handleAdd(w http.ResponseWriter, r *http.Request) {
 
 	tasks[counter] = task
 
-	err = json.NewEncoder(w).Encode(addResponse{TaskId:counter})
+	err = json.NewEncoder(w).Encode(addResponse{TaskId: counter})
 	counter++
 
 	if err != nil {
@@ -60,6 +60,24 @@ func handleAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+}
+
+func handleList(w http.ResponseWriter, r *http.Request) {
+
+	listResponse := make(map[int]interface{})
+
+	for i, task := range tasks {
+		listResponse[i] = task.Text
+	}
+
+	fmt.Println(listResponse)
+
+	err := json.NewEncoder(w).Encode(listResponse)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 func main() {
@@ -72,6 +90,9 @@ func main() {
 
 	// add data in list
 	r.HandleFunc("/add", handleAdd).Methods("POST")
+
+	// list data in list
+	r.HandleFunc("/list", handleList).Methods("GET")
 
 	handler := cors.Default().Handler(r)
 	log.Fatal(http.ListenAndServe(":1234", handler))
